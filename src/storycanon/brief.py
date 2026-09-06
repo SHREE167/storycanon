@@ -184,6 +184,11 @@ def assemble_brief(
         premise[:800] or "(none)",
         "",
     ]
+    from storycanon.arcs import briefing_block
+
+    arc_md = briefing_block(canon, chapter)
+    if arc_md:
+        md_parts.extend([arc_md.rstrip(), ""])
 
     if pov_ent:
         md_parts += ["## POV", *pov_ent.sheet_lines(), ""]

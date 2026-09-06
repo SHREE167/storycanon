@@ -8,6 +8,8 @@ from storycanon.db import Canon, find_root
 from storycanon.export_bible import export_bible
 from storycanon.ingest import ingest_chapter
 from storycanon.models import parse_delta
+from storycanon.arcs import list_arcs, upsert_arc
+from storycanon.auditor import audit_delta, auditor_prompt, load_prose
 from storycanon.query import beats_text, get_entity_text, query_canon, shortest_path, status_text
 from storycanon.truth import set_truth
 from storycanon.viz import write_graph
@@ -119,6 +121,50 @@ def tool_list_beats(chapter: int | None = None) -> str:
     return beats_text(_canon(), chapter)
 
 
+def tool_auditor_prompt(n: int, chapter_path: str | None = None) -> str:
+    canon = _canon()
+    path = Path(chapter_path) if chapter_path else None
+    prose = load_prose(canon, n, path)
+    return auditor_prompt(canon, n, prose)
+
+
+def tool_audit_chapter(n: int, delta_json: str) -> str:
+    data = json.loads(delta_json)
+    if "chapter" not in data:
+        data["chapter"] = n
+    result = audit_delta(_canon(), data)
+    return result.render()
+
+
+def tool_list_arcs() -> str:
+    rows = list_arcs(_canon())
+    if not rows:
+        return "No arcs. Use set_arc to add one."
+    return json.dumps(rows, indent=2, default=str)
+
+
+def tool_set_arc(
+    title: str,
+    start_chapter: int | None = None,
+    target_end_chapter: int | None = None,
+    climax_chapter: int | None = None,
+    status: str = "active",
+    summary: str = "",
+    arc_id: int | None = None,
+) -> str:
+    arc = upsert_arc(
+        _canon(),
+        title,
+        start_chapter=start_chapter,
+        target_end_chapter=target_end_chapter,
+        climax_chapter=climax_chapter,
+        status=status,
+        summary=summary,
+        arc_id=arc_id,
+    )
+    return json.dumps(arc, indent=2, default=str)
+
+
 def build_server():
     try:
         from mcp.server.mcpserver import MCPServer as Server
@@ -173,6 +219,26 @@ def build_server():
         name="list_beats",
         description="List story beats (plants, reveals, thread moves). Optional chapter filter.",
     )(tool_list_beats)
+    mcp.tool(
+        name="auditor_prompt",
+        description=(
+            "Build the auditor extraction prompt for chapter N. "
+            "The DRAFTER must not write delta.json. A separate auditor reads the chapter prose "
+            "and this prompt, then returns delta JSON."
+        ),
+    )(tool_auditor_prompt)
+    mcp.tool(
+        name="audit_chapter",
+        description=(
+            "Diff an auditor-extracted delta against canon (locations, injuries, secrets, "
+            "illegal power-system jumps). Does not ingest. Call before ingest_chapter."
+        ),
+    )(tool_audit_chapter)
+    mcp.tool(name="list_arcs", description="List macro-arcs (pacing milestones).")(tool_list_arcs)
+    mcp.tool(
+        name="set_arc",
+        description="Create or update a macro-arc (title, start, target end, climax chapter).",
+    )(tool_set_arc)
 
     return mcp
 

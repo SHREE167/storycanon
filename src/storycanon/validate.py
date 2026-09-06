@@ -163,6 +163,10 @@ def validate_delta(
                 )
             )
 
+    from storycanon.progression import check_progression
+
+    flags.extend(check_progression(canon, delta))
+
     for payoff in delta.payoffs:
         row = conn.execute("SELECT * FROM plants WHERE slug = ?", (payoff,)).fetchone()
         if not row and payoff not in {p.slug for p in delta.plants}:

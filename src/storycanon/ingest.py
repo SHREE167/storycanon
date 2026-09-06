@@ -429,6 +429,8 @@ def _record_beats(conn, delta: Delta) -> None:
     for edge in delta.edges:
         if edge.rel in {"allied_with", "loves", "hates", "member_of"}:
             add("relation", f"{edge.src} {edge.rel.replace('_', ' ')} {edge.dst}", edge.src)
+    for event in delta.events:
+        add(event.kind, event.note or event.kind, event.slug)
 
 
 def _set_location(

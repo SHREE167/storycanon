@@ -26,7 +26,8 @@ storycanon install
 
 Open the novel folder in your agent and say: use StoryCanon; brief, write, ingest. Do not skip ingest.
 
-Skill source of truth: `skills/storycanon/SKILL.md`
+Skill source of truth: `skills/storycanon/SKILL.md`  
+Auditor skill: `skills/storycanon-auditor/SKILL.md` (extracts delta; the drafter does not).
 
 ## For this repo (engine development)
 

@@ -136,6 +136,13 @@ class PlantSpec:
 
 
 @dataclass
+class EventSpec:
+    kind: str
+    slug: str | None = None
+    note: str = ""
+
+
+@dataclass
 class Delta:
     chapter: int
     pov: str | None = None
@@ -152,6 +159,7 @@ class Delta:
     plants: list[PlantSpec] = field(default_factory=list)
     payoffs: list[str] = field(default_factory=list)
     referenced_secrets: list[str] = field(default_factory=list)
+    events: list[EventSpec] = field(default_factory=list)
 
     def all_referenced_slugs(self) -> set[str]:
         slugs: set[str] = set()
@@ -172,6 +180,9 @@ class Delta:
             slugs.add(thread.slug)
         slugs.update(self.referenced_secrets)
         slugs.update(self.payoffs)
+        for event in self.events:
+            if event.slug:
+                slugs.add(event.slug)
         return {slugify(s) for s in slugs if s}
 
 
@@ -297,6 +308,21 @@ def parse_delta(data: dict[str, Any]) -> Delta:
         slugify(str(s)) for s in _as_list(data.get("referenced_secrets")) if str(s).strip()
     ]
 
+    events: list[EventSpec] = []
+    for raw in _as_list(data.get("events")):
+        item = _as_dict(raw)
+        kind = str(item.get("kind") or "").strip().lower()
+        if not kind:
+            raise ValueError("events[].kind is required")
+        slug_raw = item.get("slug")
+        events.append(
+            EventSpec(
+                kind=kind,
+                slug=slugify(str(slug_raw)) if slug_raw else None,
+                note=str(item.get("note") or ""),
+            )
+        )
+
     pov = data.get("pov")
     location = data.get("location")
     return Delta(
@@ -315,6 +341,7 @@ def parse_delta(data: dict[str, Any]) -> Delta:
         plants=plants,
         payoffs=payoffs,
         referenced_secrets=referenced,
+        events=events,
     )
 
 
@@ -410,5 +437,17 @@ DELTA_JSON_SCHEMA: dict[str, Any] = {
         },
         "payoffs": {"type": "array", "items": {"type": "string"}},
         "referenced_secrets": {"type": "array", "items": {"type": "string"}},
+        "events": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["kind"],
+                "properties": {
+                    "kind": {"type": "string", "description": "e.g. breakthrough, death, travel"},
+                    "slug": {"type": "string"},
+                    "note": {"type": "string"},
+                },
+            },
+        },
     },
 }

@@ -26,7 +26,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-storycanon = ["data/*"]
+storycanon = ["data/*", "data/plugins/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

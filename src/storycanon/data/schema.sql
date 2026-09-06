@@ -100,3 +100,13 @@ CREATE TABLE IF NOT EXISTS beats (
 );
 
 CREATE INDEX IF NOT EXISTS idx_beats_chapter ON beats(chapter, sort);
+
+CREATE TABLE IF NOT EXISTS arcs (
+  id INTEGER PRIMARY KEY,
+  title TEXT NOT NULL,
+  start_chapter INTEGER,
+  target_end_chapter INTEGER,
+  climax_chapter INTEGER,
+  status TEXT NOT NULL DEFAULT 'active',
+  summary TEXT NOT NULL DEFAULT ''
+);

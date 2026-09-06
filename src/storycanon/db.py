@@ -64,6 +64,7 @@ class Canon:
         self.chapters_dir = self.root / "chapters"
         self.drafts_dir = self.root / "drafts"
         self.bible_dir = self.root / "bible"
+        self.plugins_dir = self.root / "plugins"
         file_cfg = load_toml(self.cfg_path)
         self.cfg = {**DEFAULT_CONFIG, **file_cfg}
 
@@ -89,6 +90,7 @@ class Canon:
         (self.bible_dir / "characters").mkdir(exist_ok=True)
         (self.bible_dir / "threads").mkdir(exist_ok=True)
         (self.bible_dir / "world").mkdir(exist_ok=True)
+        self.plugins_dir.mkdir(exist_ok=True)
         cfg = {
             **DEFAULT_CONFIG,
             "title": title,

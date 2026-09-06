@@ -15,13 +15,20 @@ Inspired by [Graphify](https://github.com/Graphify-Labs/graphify) (query a graph
 
 This does **not** write the novel and does **not** make the prose “million-dollar.” It makes long-horizon *continuity* possible. You (or Gemini in Antigravity, or an OpenRouter agent) still write the chapters.
 
-## Write loop
+## Write loop (two-pass)
 
 ```
-brief(n)  →  write chapters/NNNN.md  →  ingest(n, delta)  →  OK or reject
+brief(n)  →  drafter writes prose only
+         →  auditor extracts delta.json from the prose
+         →  audit vs canon (incl. power-system rules)
+         →  ingest  →  OK or reject
 ```
 
-Chapter N+1 is briefed from the updated canon. The model never rereads chapters 1…N.
+The drafter must **not** write the delta. `auditor_prompt` + the `storycanon-auditor` skill extract it. `audit_chapter` diffs that extraction against canon before ingest.
+
+Chapter N+1 is briefed from the updated canon, including the current **macro-arc** stage and chapters-to-climax. The model never rereads chapters 1…N.
+
+Progression plugins live in `plugins/*.json` (see `storycanon plugin-init cultivation`). Rank skips without a `breakthrough` event are rejected.
 
 ## Install into a novel project
 
@@ -75,6 +82,11 @@ storycanon path Elara "Black Fort"
 storycanon set-truth kael --attrs "{\"injury\":\"broken rib\"}"
 storycanon export-bible
 storycanon beats
+storycanon auditor-prompt 2 chapters/0002.md
+storycanon audit 2 --delta delta.json
+storycanon plugin-init cultivation
+storycanon arc-add "The Forged Letter" --start 1 --end 40 --climax 35
+storycanon arcs
 storycanon viz --open
 storycanon demo --open
 storycanon tools-json

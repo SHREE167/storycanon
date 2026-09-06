@@ -1,0 +1,17 @@
+{
+  "id": "cultivation",
+  "label": "Cultivation",
+  "entity_types": ["character"],
+  "attr": "stage",
+  "ranks": [
+    "qi-refining",
+    "foundation",
+    "core-formation",
+    "nascent-soul",
+    "soul-transformation"
+  ],
+  "max_skip_without_event": 0,
+  "skip_event": "breakthrough",
+  "allow_regression": false,
+  "notes": "Copy to plugins/cultivation.json in a novel project. Adjacent rank-ups are legal. Skipping ranks requires events[].kind = breakthrough on that character."
+}

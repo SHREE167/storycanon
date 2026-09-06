@@ -17,6 +17,10 @@ def test_tool_names_are_stable():
         "set_truth",
         "visualize",
         "list_beats",
+        "auditor_prompt",
+        "audit_chapter",
+        "list_arcs",
+        "set_arc",
     }
 
 

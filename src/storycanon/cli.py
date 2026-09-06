@@ -159,6 +159,100 @@ def beats(
     console.print(beats_text(_canon(), chapter), markup=False)
 
 
+@app.command("auditor-prompt")
+def auditor_prompt_cmd(
+    n: int = typer.Argument(..., min=1),
+    chapter_path: Optional[Path] = typer.Argument(None),
+) -> None:
+    """Print the auditor extraction prompt for chapter N (drafter must not write the delta)."""
+    from storycanon.auditor import auditor_prompt, load_prose
+
+    canon = _canon()
+    prose = load_prose(canon, n, chapter_path)
+    console.print(auditor_prompt(canon, n, prose), markup=False)
+
+
+@app.command()
+def audit(
+    n: int = typer.Argument(..., min=1),
+    delta: Optional[Path] = typer.Option(None, "--delta"),
+    delta_json: Optional[str] = typer.Option(None, "--delta-json"),
+) -> None:
+    """Diff an auditor-extracted delta against canon. Does not ingest."""
+    from storycanon.auditor import audit_delta
+
+    if not delta and not delta_json:
+        raise typer.BadParameter("pass --delta FILE or --delta-json '{...}'")
+    data = json.loads(Path(delta).read_text(encoding="utf-8") if delta else delta_json or "{}")
+    if "chapter" not in data:
+        data["chapter"] = n
+    result = audit_delta(_canon(), data)
+    console.print(Panel(Text(result.render()), title="audit", border_style="green" if result.ok else "red"))
+    if not result.ok:
+        raise typer.Exit(code=1)
+
+
+@app.command("plugin-init")
+def plugin_init_cmd(name: str = typer.Argument("cultivation")) -> None:
+    """Copy a bundled progression plugin into plugins/."""
+    from storycanon.progression import copy_bundled_plugin
+
+    path = copy_bundled_plugin(_canon(), name)
+    console.print(f"Wrote {path}")
+
+
+@app.command("arc-add")
+def arc_add_cmd(
+    title: str,
+    start: Optional[int] = typer.Option(None, "--start"),
+    end: Optional[int] = typer.Option(None, "--end"),
+    climax: Optional[int] = typer.Option(None, "--climax"),
+    status: str = typer.Option("active"),
+    summary: str = typer.Option("", "--summary"),
+) -> None:
+    """Register a macro-arc (pacing target for briefings)."""
+    from storycanon.arcs import upsert_arc
+
+    arc = upsert_arc(
+        _canon(),
+        title,
+        start_chapter=start,
+        target_end_chapter=end,
+        climax_chapter=climax,
+        status=status,
+        summary=summary,
+    )
+    console.print(json.dumps(arc, indent=2, default=str))
+
+
+@app.command()
+def arcs() -> None:
+    """List macro-arcs."""
+    from storycanon.arcs import list_arcs
+
+    rows = list_arcs(_canon())
+    if not rows:
+        console.print("No arcs. Add one with `storycanon arc-add \"Title\" --start 1 --end 40 --climax 35`.")
+        return
+    table = Table(title="Arcs")
+    table.add_column("id")
+    table.add_column("title")
+    table.add_column("start")
+    table.add_column("end")
+    table.add_column("climax")
+    table.add_column("status")
+    for row in rows:
+        table.add_row(
+            str(row["id"]),
+            str(row["title"]),
+            str(row.get("start_chapter") or ""),
+            str(row.get("target_end_chapter") or ""),
+            str(row.get("climax_chapter") or ""),
+            str(row.get("status") or ""),
+        )
+    console.print(table)
+
+
 @app.command("set-truth")
 def set_truth_cmd(
     slug: str,

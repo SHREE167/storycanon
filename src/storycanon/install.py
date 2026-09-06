@@ -151,6 +151,64 @@ OPENAI_TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "auditor_prompt",
+            "description": "Prompt for a separate auditor subagent to extract delta.json from chapter prose. Drafter must not write the delta.",
+            "parameters": {
+                "type": "object",
+                "required": ["n"],
+                "properties": {
+                    "n": {"type": "integer"},
+                    "chapter_path": {"type": "string"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "audit_chapter",
+            "description": "Diff auditor delta against canon. Does not ingest.",
+            "parameters": {
+                "type": "object",
+                "required": ["n", "delta_json"],
+                "properties": {
+                    "n": {"type": "integer"},
+                    "delta_json": {"type": "string"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_arcs",
+            "description": "List macro-arcs.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "set_arc",
+            "description": "Create or update a macro-arc with climax pacing.",
+            "parameters": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                    "title": {"type": "string"},
+                    "start_chapter": {"type": "integer"},
+                    "target_end_chapter": {"type": "integer"},
+                    "climax_chapter": {"type": "integer"},
+                    "status": {"type": "string"},
+                    "summary": {"type": "string"},
+                    "arc_id": {"type": "integer"},
+                },
+            },
+        },
+    },
 ]
 
 
