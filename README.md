@@ -88,7 +88,6 @@ storycanon plugin-init cultivation
 storycanon arc-add "The Forged Letter" --start 1 --end 40 --climax 35
 storycanon arcs
 storycanon viz --open
-storycanon demo --open
 storycanon tools-json
 ```
 
@@ -109,7 +108,7 @@ After any ingest (or `storycanon viz --open`) you get a local HTML desk:
 - **Threads** — each plotline with the beats that moved it
 
 ```powershell
-storycanon demo --open
+storycanon viz --open
 ```
 
 ## OpenRouter / custom agents

@@ -322,24 +322,6 @@ def desk(
 
 
 @app.command()
-def demo(
-    path: Optional[Path] = typer.Option(None, "--path", help="Folder to seed"),
-    open_browser: bool = typer.Option(True, "--open/--no-open"),
-) -> None:
-    """Seed the 8-chapter Forged Archive demo and open the desk."""
-    from storycanon.demo import run_demo
-
-    html = run_demo(path, open_browser=open_browser)
-    console.print(
-        Panel.fit(
-            f"[bold]The Forged Archive[/bold]\n8 chapters · beats · graph\n\n{html}",
-            title="demo",
-            border_style="gold1",
-        )
-    )
-
-
-@app.command()
 def mcp() -> None:
     """Start the MCP stdio server for agents."""
     from storycanon.serve import run_mcp

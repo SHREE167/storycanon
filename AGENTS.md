@@ -33,7 +33,7 @@ Auditor skill: `skills/storycanon-auditor/SKILL.md` (extracts delta; the drafter
 
 - Python 3.11+, `uv sync` / `pip install -e ".[dev]"`
 - Tests: `pytest -q`
-- Demo desk: `storycanon demo --open`
 - MCP: `storycanon mcp`
+- Desk: `storycanon viz --open` (on a real novel project, not a bundled sample)
 
 Do not commit `.venv`, `__pycache__`, `node_modules`, or generated `.storycanon/` databases.
