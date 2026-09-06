@@ -1,0 +1,42 @@
+{
+  "name": "storycanon",
+  "version": "0.1.0",
+  "description": "Local continuity engine + agent skill so Gemini/Antigravity/OpenRouter can write 1000-chapter novels without losing the plot.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SHREE167/storycanon.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SHREE167/storycanon/issues"
+  },
+  "homepage": "https://github.com/SHREE167/storycanon#readme",
+  "keywords": [
+    "agent-skills",
+    "mcp",
+    "gemini",
+    "antigravity",
+    "webnovel",
+    "story-bible",
+    "continuity"
+  ],
+  "bin": {
+    "storycanon": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "skills",
+    "src",
+    "pyproject.toml",
+    "README.md",
+    "LICENSE",
+    "AGENTS.md"
+  ],
+  "scripts": {
+    "postinstall": "node bin/setup.js",
+    "test": "python -m pytest -q"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>StoryCanon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,650;1,9..144,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #110f0d;
+    --panel: #1b1714;
+    --raised: #241f1a;
+    --line: #3d342b;
+    --cream: #f4ead7;
+    --gold: #d4b07a;
+    --gold-dim: #8a7048;
+    --muted: #9a8d7a;
+    --danger: #d46a6a;
+    --ok: #8fbf8a;
+    --cyan: #7dd3fc;
+    --green: #86efac;
+    --amber: #fbbf24;
+    --pink: #e879f9;
+    --violet: #c4b5fd;
+    --orange: #fdba74;
+    --rose: #fb7185;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--ink); color: var(--cream);
+    font-family: Outfit, ui-sans-serif, system-ui, sans-serif; }
+  body { display: flex; flex-direction: column; }
+  header {
+    display: flex; align-items: center; gap: 18px; padding: 10px 18px;
+    border-bottom: 1px solid var(--line); background: var(--panel);
+    flex-wrap: wrap;
+  }
+  .brand { font-family: Fraunces, Georgia, serif; font-weight: 650; font-size: 18px;
+    letter-spacing: .02em; color: var(--gold); white-space: nowrap; }
+  .brand span { color: var(--cream); font-weight: 500; font-size: 15px; margin-left: 8px; }
+  nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  nav button, .ghost {
+    background: transparent; border: 1px solid transparent; color: var(--muted);
+    padding: 7px 12px; border-radius: 999px; cursor: pointer; font: inherit; font-size: 13px;
+  }
+  nav button.active, nav button:hover { color: var(--cream); border-color: var(--line); background: var(--raised); }
+  nav button.active { border-color: var(--gold-dim); color: var(--gold); }
+  .grow { flex: 1; }
+  #search {
+    background: var(--ink); border: 1px solid var(--line); color: var(--cream);
+    padding: 8px 12px; border-radius: 999px; min-width: 180px; font: inherit; font-size: 13px;
+  }
+  #search:focus { outline: 1px solid var(--gold-dim); }
+  main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 320px; }
+  .view { display: none; min-width: 0; min-height: 0; overflow: auto; }
+  .view.on { display: flex; flex-direction: column; }
+  #graph-view.on { display: grid; grid-template-rows: 1fr auto; }
+  #stage { position: relative; background:
+    radial-gradient(1200px 600px at 50% 40%, #1c1814 0%, var(--ink) 70%); }
+  canvas { display: block; width: 100%; height: 100%; }
+  .hint { position: absolute; left: 14px; bottom: 12px; color: var(--muted); font-size: 11px; letter-spacing: .04em; }
+  #graph-bar {
+    display: flex; gap: 12px; align-items: center; padding: 10px 16px;
+    border-top: 1px solid var(--line); background: var(--panel); flex-wrap: wrap;
+  }
+  #graph-bar label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  #graph-bar input[type=range] { width: 180px; accent-color: var(--gold); }
+  #graph-bar input[type=text] {
+    background: var(--ink); border: 1px solid var(--line); color: var(--cream);
+    padding: 6px 8px; border-radius: 8px; width: 120px; font: inherit; font-size: 12px;
+  }
+  #side {
+    border-left: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 18px;
+  }
+  #side h2 { font-family: Fraunces, Georgia, serif; font-size: 22px; margin: 6px 0 4px; }
+  #side .type { color: var(--gold); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+  #side p, #side li { font-size: 13px; line-height: 1.5; color: #e6dcc8; }
+  #side ul { padding-left: 18px; }
+  .empty { color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line);
+    border-radius: 999px; padding: 2px 8px; font-size: 11px; color: var(--muted); margin: 2px; }
+  .dot { width: 8px; height: 8px; border-radius: 99px; display: inline-block; }
+  .page { padding: 22px 28px 48px; max-width: 1100px; }
+  .page h1 { font-family: Fraunces, Georgia, serif; font-weight: 650; font-size: 28px; margin: 0 0 6px; }
+  .lede { color: var(--muted); margin: 0 0 22px; max-width: 62ch; line-height: 1.5; }
+  .rail { display: flex; flex-direction: column; gap: 0; }
+  .ch {
+    display: grid; grid-template-columns: 72px 1fr; gap: 16px; padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ch .n { font-family: Fraunces, Georgia, serif; color: var(--gold); font-size: 20px; }
+  .ch h3 { margin: 0 0 4px; font-size: 16px; font-weight: 500; }
+  .meta { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .col { background: var(--raised); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-height: 180px; }
+  .col h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+  .card { background: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+  .card:hover { border-color: var(--gold-dim); }
+  .card b { display: block; margin-bottom: 4px; }
+  .card small { color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .person { background: var(--raised); border: 1px solid var(--line); border-radius: 16px; padding: 14px; cursor: pointer; }
+  .person:hover { border-color: var(--gold-dim); }
+  .person h3 { margin: 0; font-family: Fraunces, Georgia, serif; }
+  .kicker { font-size: 11px; color: var(--gold); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; }
+  .thread { border-bottom: 1px solid var(--line); padding: 14px 0; }
+  .stats { display: flex; gap: 16px; flex-wrap: wrap; margin: 8px 0 20px; }
+  .stat { font-size: 12px; color: var(--muted); }
+  .stat b { color: var(--cream); font-weight: 500; }
+  @media (max-width: 980px) {
+    main { grid-template-columns: 1fr; }
+    #side { border-left: none; border-top: 1px solid var(--line); max-height: 34vh; }
+    .board { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">StoryCanon <span id="book-title"></span></div>
+  <nav>
+    <button data-view="graph" class="active">Graph</button>
+    <button data-view="timeline">Timeline</button>
+    <button data-view="beats">Beats</button>
+    <button data-view="cast">Cast</button>
+    <button data-view="threads">Threads</button>
+  </nav>
+  <div class="grow"></div>
+  <input id="search" type="search" placeholder="Search  /" />
+</header>
+<main>
+  <section id="graph-view" class="view on">
+    <div id="stage">
+      <canvas id="c"></canvas>
+      <div class="hint">drag · scroll zoom · click a node · 1–5 switch views</div>
+    </div>
+    <div id="graph-bar">
+      <label>as of ch. <b id="ch-label">1</b>
+        <input id="ch-range" type="range" min="1" max="1" value="1"/>
+      </label>
+      <label><input id="history" type="checkbox" checked/> past edges</label>
+      <label>path <input id="path-a" type="text" placeholder="from"/> →
+        <input id="path-b" type="text" placeholder="to"/>
+        <button class="ghost" id="path-go">trace</button>
+        <button class="ghost" id="path-clear">clear</button>
+      </label>
+    </div>
+  </section>
+  <section id="timeline-view" class="view"><div class="page" id="timeline"></div></section>
+  <section id="beats-view" class="view"><div class="page" id="beats"></div></section>
+  <section id="cast-view" class="view"><div class="page" id="cast"></div></section>
+  <section id="threads-view" class="view"><div class="page" id="threads"></div></section>
+  <aside id="side"><div class="empty" id="detail">Click a character, place, thread, or beat.</div></aside>
+</main>
+<script>
+window.STORYCANON = /*__STORYCANON_DATA__*/ null;
+const DATA = window.STORYCANON || {title:"Untitled", premise:"", chapters:0, nodes:[], edges:[], chapter_list:[], beats:[], plants:[], threads:[], flags:[], stats:{}};
+document.title = (DATA.title || "StoryCanon") + " — desk";
+document.getElementById("book-title").textContent = DATA.title ? "· " + DATA.title : "";
+
+const COLORS = {character:"#7dd3fc", location:"#86efac", thread:"#fbbf24", secret:"#e879f9", faction:"#c4b5fd", item:"#fdba74", rule:"#94a3b8", event:"#fca5a5", plant:"#fb7185"};
+
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const chRange = document.getElementById("ch-range");
+const chLabel = document.getElementById("ch-label");
+chRange.max = Math.max(1, DATA.chapters || 1);
+chRange.value = chRange.max;
+chLabel.textContent = chRange.value;
+
+const nodes = (DATA.nodes || []).map((n, i) => {
+  const ang = (i / Math.max(DATA.nodes.length, 1)) * Math.PI * 2;
+  const ring = 90 + (n.degree || 1) * 8;
+  return {...n, x: Math.cos(ang)*ring, y: Math.sin(ang)*ring, vx:0, vy:0};
+});
+const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+let scale = 1, ox = 0, oy = 0, drag = null, pan = null, hover = null, selected = null;
+let query = "", pathIds = new Set(), chapterAt = Number(chRange.value);
+
+function esc(s){ return String(s??"").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+function nodeAt(n){
+  if (n.first_chapter && n.first_chapter > chapterAt) return false;
+  if (query) {
+    const q = query.toLowerCase();
+    const hit = n.label.toLowerCase().includes(q) || n.id.includes(q) ||
+      (n.aliases||[]).some(a => String(a).toLowerCase().includes(q));
+    if (!hit) return false;
+  }
+  return true;
+}
+function edgeAt(e){
+  if (e.from_chapter > chapterAt) return false;
+  const live = e.to_chapter == null || e.to_chapter > chapterAt;
+  if (!live && !document.getElementById("history").checked) return false;
+  const a = byId[e.source], b = byId[e.target];
+  return a && b && nodeAt(a) && nodeAt(b);
+}
+
+function resize(){
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+  canvas.style.width = r.width + "px";
+  canvas.style.height = r.height + "px";
+}
+addEventListener("resize", resize); resize();
+
+function toWorld(mx, my){
+  const r = canvas.getBoundingClientRect();
+  return { x:(mx-r.left-r.width/2-ox)/scale, y:(my-r.top-r.height/2-oy)/scale };
+}
+function hit(mx, my){
+  const p = toWorld(mx, my);
+  let best=null, bestD=18/scale;
+  for (const n of nodes){
+    if (!nodeAt(n)) continue;
+    const d = Math.hypot(n.x-p.x, n.y-p.y);
+    if (d < bestD){ best=n; bestD=d; }
+  }
+  return best;
+}
+
+function tick(){
+  const vis = nodes.filter(nodeAt);
+  for (let i=0;i<vis.length;i++){
+    for (let j=i+1;j<vis.length;j++){
+      const a=vis[i], b=vis[j];
+      let dx=a.x-b.x, dy=a.y-b.y, dist=Math.hypot(dx,dy)||0.01;
+      const force = 2400/(dist*dist);
+      dx/=dist; dy/=dist;
+      a.vx += dx*force; a.vy += dy*force;
+      b.vx -= dx*force; b.vy -= dy*force;
+    }
+  }
+  for (const e of DATA.edges){
+    if (!edgeAt(e)) continue;
+    const a=byId[e.source], b=byId[e.target];
+    const dx=b.x-a.x, dy=b.y-a.y, dist=Math.hypot(dx,dy)||0.01;
+    const rest = e.closed ? 150 : 88;
+    const k = 0.01*(dist-rest);
+    a.vx += (dx/dist)*k; a.vy += (dy/dist)*k;
+    b.vx -= (dx/dist)*k; b.vy -= (dy/dist)*k;
+  }
+  for (const n of vis){
+    n.vx += -n.x*0.003; n.vy += -n.y*0.003;
+    n.vx *= 0.8; n.vy *= 0.8;
+    if (drag !== n){ n.x += n.vx; n.y += n.vy; }
+  }
+}
+
+function draw(){
+  const r = canvas.getBoundingClientRect();
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  ctx.translate(r.width/2+ox, r.height/2+oy);
+  ctx.scale(scale, scale);
+
+  for (const e of DATA.edges){
+    if (!edgeAt(e)) continue;
+    const a=byId[e.source], b=byId[e.target];
+    const onPath = pathIds.size && pathIds.has(e.source) && pathIds.has(e.target);
+    const live = e.to_chapter == null || e.to_chapter > chapterAt;
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+    ctx.strokeStyle = onPath ? "rgba(212,176,122,0.95)" : live ? "rgba(212,176,122,0.35)" : "rgba(154,141,122,0.22)";
+    ctx.lineWidth = (onPath ? 2.4 : live ? 1.4 : 1) / scale;
+    ctx.setLineDash(live ? [] : [6/scale, 5/scale]);
+    ctx.stroke(); ctx.setLineDash([]);
+    if (selected && (e.source===selected.id || e.target===selected.id || onPath)){
+      ctx.fillStyle = "rgba(244,234,215,0.7)";
+      ctx.font = `${11/scale}px Outfit, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(e.rel, (a.x+b.x)/2, (a.y+b.y)/2 - 4/scale);
+    }
+  }
+  for (const n of nodes){
+    if (!nodeAt(n)) continue;
+    const rad = 8 + Math.min(10, (n.degree||1)*1.4);
+    ctx.beginPath(); ctx.arc(n.x,n.y,rad,0,Math.PI*2);
+    ctx.fillStyle = n.dim ? "#3d342b" : (n.color || COLORS[n.type] || "#d4b07a");
+    ctx.globalAlpha = n.dim ? 0.5 : 1;
+    ctx.shadowColor = (selected===n || hover===n) ? "rgba(212,176,122,0.8)" : "transparent";
+    ctx.shadowBlur = (selected===n || hover===n) ? 18 : 0;
+    ctx.fill();
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    if (pathIds.has(n.id) || selected===n || hover===n){
+      ctx.strokeStyle = "#f4ead7"; ctx.lineWidth = 2/scale; ctx.stroke();
+    }
+    ctx.fillStyle = "#f4ead7";
+    ctx.font = `${12/scale}px Outfit, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(n.label, n.x, n.y + rad + 13/scale);
+  }
+}
+
+function loop(){ tick(); tick(); draw(); requestAnimationFrame(loop); }
+loop();
+
+function show(n){
+  selected = n;
+  const el = document.getElementById("detail");
+  if (!n){ el.className="empty"; el.textContent="Click a character, place, thread, or beat."; return; }
+  const edges = (DATA.edges||[]).filter(e => e.source===n.id || e.target===n.id);
+  const attrs = Object.entries(n.attrs||{}).filter(([,v]) => v!=="" && v!=null)
+    .map(([k,v]) => `<li><b>${esc(k)}</b>: ${esc(v)}</li>`).join("");
+  const elist = edges.map(e => {
+    const other = e.source===n.id ? e.target : e.source;
+    const lab = (byId[other]||{}).label || other;
+    const when = e.to_chapter ? `ch.${e.from_chapter}–${e.to_chapter}` : `since ch.${e.from_chapter}`;
+    return `<li>${e.source===n.id?"→":"←"} ${esc(e.rel)} <b>${esc(lab)}</b> <span style="color:var(--muted)">(${when})</span></li>`;
+  }).join("");
+  const relatedBeats = (DATA.beats||[]).filter(b => b.entity_slug===n.id).slice(-8)
+    .map(b => `<li>[${esc(b.kind)} · ch.${b.chapter}] ${esc(b.text)}</li>`).join("");
+  el.className = "";
+  el.innerHTML = `
+    <div class="type">${esc(n.type)} · ${esc(n.status)}</div>
+    <h2>${esc(n.label)}</h2>
+    <p class="empty">${esc(n.id)}${n.last_seen? " · last seen ch."+n.last_seen:""}</p>
+    ${n.summary ? "<p>"+esc(n.summary)+"</p>" : ""}
+    ${attrs ? "<p><b>Facts</b></p><ul>"+attrs+"</ul>" : ""}
+    ${elist ? "<p><b>Links</b></p><ul>"+elist+"</ul>" : "<p class='empty'>No edges yet.</p>"}
+    ${relatedBeats ? "<p><b>Beats</b></p><ul>"+relatedBeats+"</ul>" : ""}
+  `;
+}
+
+function showBeat(b){
+  const n = byId[b.entity_slug];
+  document.getElementById("detail").className = "";
+  document.getElementById("detail").innerHTML = `
+    <div class="type">beat · ${esc(b.kind)} · ch.${b.chapter}</div>
+    <h2>${esc(b.text)}</h2>
+    ${n ? `<p>Tied to <b>${esc(n.label)}</b></p>` : ""}
+  `;
+  if (n) selected = n;
+}
+
+canvas.addEventListener("pointerdown", e => {
+  const n = hit(e.clientX, e.clientY);
+  if (n){ drag=n; show(n); canvas.setPointerCapture(e.pointerId); }
+  else { pan={x:e.clientX-ox,y:e.clientY-oy}; canvas.setPointerCapture(e.pointerId); }
+});
+canvas.addEventListener("pointermove", e => {
+  hover = hit(e.clientX, e.clientY);
+  canvas.style.cursor = hover ? "pointer" : pan ? "grabbing" : "grab";
+  if (drag){ const p=toWorld(e.clientX,e.clientY); drag.x=p.x; drag.y=p.y; drag.vx=0; drag.vy=0; }
+  else if (pan){ ox=e.clientX-pan.x; oy=e.clientY-pan.y; }
+});
+canvas.addEventListener("pointerup", () => { drag=null; pan=null; });
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  scale = Math.min(4, Math.max(0.22, scale * (e.deltaY<0 ? 1.08 : 0.92)));
+}, {passive:false});
+
+chRange.addEventListener("input", () => { chapterAt = Number(chRange.value); chLabel.textContent = chapterAt; });
+document.getElementById("search").addEventListener("input", e => { query = e.target.value.trim(); });
+
+function bfs(a, b){
+  const start = nodes.find(n => n.id===a || n.label.toLowerCase()===a.toLowerCase());
+  const end = nodes.find(n => n.id===b || n.label.toLowerCase()===b.toLowerCase());
+  if (!start || !end) return [];
+  const adj = {};
+  for (const e of DATA.edges){
+    if (!edgeAt(e)) continue;
+    (adj[e.source] ||= []).push(e.target);
+    (adj[e.target] ||= []).push(e.source);
+  }
+  const prev={}, q=[start.id]; const seen=new Set(q);
+  while(q.length){
+    const cur=q.shift();
+    if (cur===end.id) break;
+    for (const nxt of (adj[cur]||[])){
+      if (!seen.has(nxt)){ seen.add(nxt); prev[nxt]=cur; q.push(nxt); }
+    }
+  }
+  if (start.id!==end.id && prev[end.id]==null) return [];
+  const path=[end.id];
+  while (path[0] !== start.id){ if (prev[path[0]]==null) return []; path.unshift(prev[path[0]]); }
+  return path;
+}
+document.getElementById("path-go").onclick = () => {
+  pathIds = new Set(bfs(document.getElementById("path-a").value.trim(), document.getElementById("path-b").value.trim()));
+};
+document.getElementById("path-clear").onclick = () => { pathIds = new Set(); };
+
+function statsLine(){
+  const s = DATA.stats || {};
+  return `<div class="stats">
+    <div class="stat"><b>${s.characters||0}</b> characters</div>
+    <div class="stat"><b>${s.locations||0}</b> places</div>
+    <div class="stat"><b>${s.threads||0}</b> threads</div>
+    <div class="stat"><b>${s.beats||0}</b> beats</div>
+    <div class="stat"><b>${s.due_plants||0}</b> due guns</div>
+    <div class="stat"><b>${s.open_flags||0}</b> flags</div>
+  </div>`;
+}
+
+function renderTimeline(){
+  const el = document.getElementById("timeline");
+  const chs = DATA.chapter_list || [];
+  el.innerHTML = `<h1>Timeline</h1><p class="lede">${esc(DATA.premise||"")}</p>${statsLine()}
+    <div class="rail">${chs.length? chs.map(ch => `
+      <article class="ch">
+        <div class="n">${String(ch.n).padStart(2,"0")}</div>
+        <div>
+          <h3>${esc(ch.title || ("Chapter "+ch.n))}</h3>
+          <div class="meta">${esc(ch.pov||"")} ${ch.location? "· "+esc(ch.location):""} ${ch.word_count? "· "+ch.word_count+" words":""}</div>
+          <p>${esc(ch.summary||"")}</p>
+          ${(ch.beats||[]).map(b => `<span class="chip">${esc(b.kind)} ${esc(b.text).slice(0,80)}</span>`).join("")}
+        </div>
+      </article>`).join("") : "<p class='empty'>No chapters ingested yet.</p>"}</div>`;
+}
+
+function renderBeats(){
+  const el = document.getElementById("beats");
+  const plants = DATA.plants || [];
+  const last = DATA.chapters || 0;
+  const planted = plants.filter(p => !p.paid_chapter);
+  const due = planted.filter(p => p.planted_chapter + p.due_after <= last + 1);
+  const paid = plants.filter(p => p.paid_chapter);
+  const active = (DATA.threads||[]).filter(t => t.status==="active");
+  const col = (title, items) => `<div class="col"><h3>${title}</h3>${items || "<p class='empty'>none</p>"}</div>`;
+  const plantCards = (arr, extra) => arr.map(p => `<div class="card" data-slug="${esc(p.slug)}"><b>${esc(p.slug)}</b><small>ch.${p.planted_chapter}${extra(p)}</small></div>`).join("");
+  const threadCards = active.map(t => `<div class="card" data-slug="${esc(t.slug)}"><b>${esc(t.name)}</b><small>${esc(t.summary||"")}</small></div>`).join("");
+  const list = (DATA.beats||[]).map(b => `<div class="ch"><div class="n">${b.chapter}</div><div><span class="chip">${esc(b.kind)}</span> ${esc(b.text)}</div></div>`).join("");
+  el.innerHTML = `<h1>Beats</h1><p class="lede">Plants, payoffs, reveals, and thread moves — the promises you have made to the reader.</p>
+    <div class="board">
+      ${col("Planted", plantCards(planted.filter(p => !due.includes(p)), p => ""))}
+      ${col("Due Chekhov", plantCards(due, p => " · due"))}
+      ${col("Active threads", threadCards)}
+      ${col("Paid off", plantCards(paid, p => " · paid ch."+p.paid_chapter))}
+    </div>
+    <h1 style="margin-top:28px">By chapter</h1>
+    <div class="rail">${list || "<p class='empty'>No beats yet.</p>"}</div>`;
+  el.querySelectorAll(".card[data-slug]").forEach(c => c.onclick = () => {
+    const n = byId[c.getAttribute("data-slug")]; if (n) show(n);
+  });
+}
+
+function renderCast(){
+  const el = document.getElementById("cast");
+  const people = nodes.filter(n => n.type==="character");
+  const places = nodes.filter(n => n.type==="location");
+  const card = n => `<div class="person" data-id="${n.id}">
+    <div class="kicker">${esc(n.status)}${n.attrs && n.attrs.location ? " · "+esc(n.attrs.location):""}</div>
+    <h3>${esc(n.label)}</h3>
+    <p class="empty">${esc(n.summary||n.attrs?.injury||"")}</p>
+  </div>`;
+  el.innerHTML = `<h1>Cast</h1>${statsLine()}<div class="grid">${people.map(card).join("")||"<p class='empty'>No characters.</p>"}</div>
+    <h1 style="margin-top:28px">Places</h1><div class="grid">${places.map(card).join("")}</div>`;
+  el.querySelectorAll(".person").forEach(c => c.onclick = () => show(byId[c.getAttribute("data-id")]));
+}
+
+function renderThreads(){
+  const el = document.getElementById("threads");
+  const ts = DATA.threads || [];
+  el.innerHTML = `<h1>Threads</h1><p class="lede">Every open and closed plotline, with the beats that moved it.</p>
+    ${ts.map(t => {
+      const beats = (DATA.beats||[]).filter(b => b.entity_slug===t.slug);
+      return `<article class="thread">
+        <div class="kicker">${esc(t.status)}</div>
+        <h3>${esc(t.name)}</h3>
+        <p>${esc(t.summary||"")}</p>
+        ${beats.map(b => `<span class="chip">ch.${b.chapter} ${esc(b.text).slice(0,90)}</span>`).join("")}
+      </article>`;
+    }).join("") || "<p class='empty'>No threads yet.</p>"}`;
+}
+
+const views = ["graph","timeline","beats","cast","threads"];
+function setView(name){
+  views.forEach(v => {
+    document.getElementById(v+"-view").classList.toggle("on", v===name);
+    document.querySelector(`nav button[data-view="${v}"]`).classList.toggle("active", v===name);
+  });
+  if (name==="timeline") renderTimeline();
+  if (name==="beats") renderBeats();
+  if (name==="cast") renderCast();
+  if (name==="threads") renderThreads();
+}
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => setView(b.dataset.view));
+addEventListener("keydown", e => {
+  if (e.key==="/" && document.activeElement.tagName!=="INPUT"){ e.preventDefault(); document.getElementById("search").focus(); }
+  if (e.key>="1" && e.key<="5" && document.activeElement.tagName!=="INPUT") setView(views[Number(e.key)-1]);
+  if (e.key==="Escape"){ document.getElementById("search").blur(); query=""; document.getElementById("search").value=""; }
+});
+</script>
+</body>
+</html>

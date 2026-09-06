@@ -1,0 +1,4 @@
+recursive-include src/storycanon/data *
+recursive-include skills *
+include AGENTS.md AgentSkills.md LICENSE README.md package.json
+graft bin

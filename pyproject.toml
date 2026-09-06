@@ -1,0 +1,33 @@
+[project]
+name = "storycanon"
+version = "0.1.0"
+description = "Local continuity engine so AI agents can write 1000-chapter novels without losing the plot."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "StoryCanon" }]
+dependencies = [
+  "typer>=0.12",
+  "rich>=13.0",
+  "mcp>=1.2",  # 1.x FastMCP and 2.x MCPServer both supported
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+storycanon = "storycanon.cli:app"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+storycanon = ["data/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
