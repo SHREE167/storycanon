@@ -51,6 +51,11 @@ def test_happy_path_updates_location_and_knowledge(project):
     assert elara is not None
     assert elara.location() == "black-fort"
     assert project.last_chapter_n() == 2
+    desk = project.canon_dir / "graph.html"
+    easy = project.root / "storycanon-desk.html"
+    assert desk.exists()
+    assert "Elara" in desk.read_text(encoding="utf-8")
+    assert easy.exists()
     sheet = get_entity_text(project, "the archivist")
     assert "Elara" in sheet
     assert "Heir Pact" in query_canon(project, "who knows heir-pact")

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import io
 import json
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -9,6 +11,34 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+
+
+def _configure_stdio() -> None:
+    """Windows cp437/cp1252 cannot print arrows or Rich box drawing."""
+    for name in ("stdout", "stderr"):
+        stream = getattr(sys, name, None)
+        if stream is None:
+            continue
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+                continue
+            except (OSError, ValueError, AttributeError):
+                pass
+        buf = getattr(stream, "buffer", None)
+        if buf is None:
+            continue
+        try:
+            wrapped = io.TextIOWrapper(
+                buf, encoding="utf-8", errors="replace", line_buffering=True
+            )
+            setattr(sys, name, wrapped)
+        except (OSError, ValueError, AttributeError):
+            continue
+
+
+_configure_stdio()
 
 from storycanon import __version__
 from storycanon.brief import assemble_brief
@@ -26,7 +56,7 @@ app = typer.Typer(
     no_args_is_help=True,
     help="Local continuity engine for long AI-written novels — canon, beats, and a story desk.",
 )
-console = Console()
+console = Console(legacy_windows=False, emoji=False)
 
 
 def _canon() -> Canon:
@@ -118,11 +148,10 @@ def ingest(
         chapter_path,
         strict=not lenient,
         force=force,
+        refresh_desk=viz,
     )
     style = "green" if result.ok else "red"
     console.print(Panel(Text(result.render()), title="ingest", border_style=style))
-    if result.ok and viz:
-        _refresh_desk(canon)
     if not result.ok:
         raise typer.Exit(code=1)
 

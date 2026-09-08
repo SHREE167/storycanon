@@ -37,6 +37,7 @@ def test_200_chapters_brief_stays_under_budget(project):
             "plants": [{"slug": "hidden-key", "due_after": 30}],
         },
         strict=True,
+        refresh_desk=False,
     )
     assert first.ok, first.render()
 
@@ -55,6 +56,7 @@ def test_200_chapters_brief_stays_under_budget(project):
                 "threads": [{"slug": "the-hunt", "beat": f"still hunted in ch.{n}"}],
             },
             strict=True,
+            refresh_desk=False,
         )
         assert result.ok, result.render()
 

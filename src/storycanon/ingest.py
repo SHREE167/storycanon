@@ -57,6 +57,7 @@ def ingest_chapter(
     strict: bool | None = None,
     force: bool = False,
     body: str | None = None,
+    refresh_desk: bool = True,
 ) -> IngestResult:
     if not isinstance(delta, Delta):
         delta = parse_delta(delta)
@@ -386,6 +387,13 @@ def ingest_chapter(
         }
     )
     extra = f" ({len(flags)} non-blocking flags)" if flags else ""
+    if refresh_desk:
+        try:
+            from storycanon.viz import write_graph
+
+            write_graph(canon)
+        except Exception:
+            pass
     return IngestResult(
         ok=True,
         chapter=delta.chapter,
