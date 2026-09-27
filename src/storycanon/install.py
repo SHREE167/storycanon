@@ -223,7 +223,13 @@ def _skill_text() -> str:
     return files("storycanon").joinpath("data/SKILL.md").read_text(encoding="utf-8")
 
 
-def install_project(root: Path | None = None) -> list[str]:
+def _mcp_entry(mcp_url: str | None) -> dict:
+    if mcp_url:
+        return {"url": mcp_url}
+    return {"command": "storycanon", "args": ["mcp"]}
+
+
+def install_project(root: Path | None = None, mcp_url: str | None = None) -> list[str]:
     root = find_root(root)
     written: list[str] = []
 
@@ -241,10 +247,7 @@ def install_project(root: Path | None = None) -> list[str]:
         except json.JSONDecodeError:
             mcp_cfg = {}
     servers = mcp_cfg.setdefault("mcpServers", {})
-    servers["storycanon"] = {
-        "command": "storycanon",
-        "args": ["mcp"],
-    }
+    servers["storycanon"] = _mcp_entry(mcp_url)
     mcp_path.write_text(json.dumps(mcp_cfg, indent=2) + "\n", encoding="utf-8")
     written.append(str(mcp_path))
 
@@ -258,7 +261,7 @@ def install_project(root: Path | None = None) -> list[str]:
         except json.JSONDecodeError:
             settings = {}
     mcp_servers = settings.setdefault("mcpServers", {})
-    mcp_servers["storycanon"] = {"command": "storycanon", "args": ["mcp"]}
+    mcp_servers["storycanon"] = _mcp_entry(mcp_url)
     gemini_settings.write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
     written.append(str(gemini_settings))
 

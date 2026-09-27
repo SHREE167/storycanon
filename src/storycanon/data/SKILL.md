@@ -7,6 +7,8 @@ description: Continuity engine for long novels. Use when writing or editing a we
 
 Write against local canon, not chat memory. Engine: `storycanon` CLI / MCP tools of the same name.
 
+Live HTTP MCP (optional): `storycanon mcp --http --port 8765 --root .` then connect the agent to `http://127.0.0.1:8765/mcp`.
+
 If missing:
 
 ```text

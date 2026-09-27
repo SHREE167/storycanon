@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from storycanon.brief import assemble_brief
@@ -16,6 +17,9 @@ from storycanon.viz import write_graph
 
 
 def _canon() -> Canon:
+    pinned = os.environ.get("STORYCANON_ROOT")
+    if pinned:
+        return Canon(Path(pinned))
     return Canon(find_root())
 
 
@@ -243,5 +247,88 @@ def build_server():
     return mcp
 
 
-def run_mcp() -> None:
-    build_server().run()
+def run_mcp(
+    transport: str = "stdio",
+    *,
+    host: str = "127.0.0.1",
+    port: int = 8765,
+    token: str | None = None,
+    root: Path | None = None,
+) -> None:
+    if root is not None:
+        os.environ["STORYCANON_ROOT"] = str(Path(root).resolve())
+    server = build_server()
+    kind = transport.lower().strip()
+    if kind in {"stdio", ""}:
+        server.run(transport="stdio")
+        return
+    if kind in {"sse"}:
+        server.run(transport="sse", host=host, port=port)
+        return
+    if kind not in {"http", "streamable-http", "live"}:
+        raise ValueError(f"Unknown MCP transport: {transport}")
+
+    from mcp.server.transport_security import TransportSecuritySettings
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.responses import JSONResponse, HTMLResponse
+    from starlette.routing import Route
+    import uvicorn
+
+    security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=host not in {"0.0.0.0", "::", "*"},
+        allowed_hosts=[host, "127.0.0.1", "localhost", "*"],
+        allowed_origins=["*"],
+    )
+    app = server.streamable_http_app(
+        streamable_http_path="/mcp",
+        stateless_http=True,
+        host=host,
+        transport_security=security,
+    )
+
+    async def health(_request):
+        return JSONResponse(
+            {
+                "ok": True,
+                "name": "storycanon",
+                "transport": "streamable-http",
+                "mcp": "/mcp",
+                "root": os.environ.get("STORYCANON_ROOT") or str(find_root()),
+            }
+        )
+
+    async def home(_request):
+        url = f"http://{host}:{port}/mcp"
+        return HTMLResponse(
+            f"""<!doctype html><meta charset="utf-8"/>
+<title>StoryCanon MCP</title>
+<body style="font-family:sans-serif;max-width:40rem;margin:2rem auto;line-height:1.5">
+<h1>StoryCanon live MCP</h1>
+<p>Streamable HTTP endpoint:</p>
+<pre>{url}</pre>
+<p>Health: <a href="/health">/health</a></p>
+<p>Point Gemini / Antigravity at that URL:</p>
+<pre>{{
+  "mcpServers": {{
+    "storycanon": {{ "url": "{url}" }}
+  }}
+}}</pre>
+</body>"""
+        )
+
+    app.router.routes.insert(0, Route("/health", health, methods=["GET"]))
+    app.router.routes.insert(0, Route("/", home, methods=["GET"]))
+
+    if token:
+        class BearerAuth(BaseHTTPMiddleware):
+            async def dispatch(self, request, call_next):
+                if request.url.path in {"/", "/health"}:
+                    return await call_next(request)
+                header = request.headers.get("authorization", "")
+                if header != f"Bearer {token}":
+                    return JSONResponse({"error": "unauthorized"}, status_code=401)
+                return await call_next(request)
+
+        app.add_middleware(BearerAuth)
+
+    uvicorn.run(app, host=host, port=port, log_level="info")

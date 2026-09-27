@@ -351,17 +351,39 @@ def desk(
 
 
 @app.command()
-def mcp() -> None:
-    """Start the MCP stdio server for agents."""
+def mcp(
+    http: bool = typer.Option(False, "--http", help="Live Streamable HTTP MCP (URL) instead of stdio"),
+    sse: bool = typer.Option(False, "--sse", help="Legacy SSE transport"),
+    host: str = typer.Option("127.0.0.1", "--host"),
+    port: int = typer.Option(8765, "--port"),
+    root: Optional[Path] = typer.Option(None, "--root", help="Novel project folder (pins canon)"),
+    token: Optional[str] = typer.Option(
+        None, "--token", envvar="STORYCANON_MCP_TOKEN", help="Optional Bearer token for HTTP"
+    ),
+) -> None:
+    """Start MCP. Default is stdio (local agents). --http is the live URL server."""
     from storycanon.serve import run_mcp
 
-    run_mcp()
+    transport = "stdio"
+    if http:
+        transport = "http"
+    elif sse:
+        transport = "sse"
+    if transport != "stdio":
+        console.print(f"Live MCP: [bold]http://{host}:{port}/mcp[/bold]  (health /health)")
+        if token:
+            console.print("Auth: Authorization: Bearer <token>")
+    run_mcp(transport, host=host, port=port, token=token, root=root)
 
 
 @app.command()
-def install() -> None:
+def install(
+    http_url: Optional[str] = typer.Option(
+        None, "--http", help="Use a live MCP URL instead of spawning stdio (e.g. http://127.0.0.1:8765/mcp)"
+    ),
+) -> None:
     """Wire MCP + skill files into the current novel project (Antigravity, Gemini, generic)."""
-    written = install_project()
+    written = install_project(mcp_url=http_url)
     table = Table(title="Agent files")
     table.add_column("path")
     for item in written:

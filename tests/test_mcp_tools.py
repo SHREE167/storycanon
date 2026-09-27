@@ -41,6 +41,30 @@ def test_mcp_server_lists_core_tools():
     } <= names
 
 
+def test_install_can_point_at_live_http_url(tmp_path):
+    from storycanon.db import Canon
+    from storycanon.install import install_project
+    import json
+
+    Canon(tmp_path).init_project("premise", "Live")
+    install_project(tmp_path, mcp_url="http://127.0.0.1:8765/mcp")
+    cfg = json.loads((tmp_path / ".agents" / "mcp_config.json").read_text(encoding="utf-8"))
+    assert cfg["mcpServers"]["storycanon"]["url"] == "http://127.0.0.1:8765/mcp"
+
+
+def test_http_app_exposes_mcp_path():
+    from storycanon.serve import build_server
+
+    server = build_server()
+    app = server.streamable_http_app(streamable_http_path="/mcp", stateless_http=True)
+    paths = []
+    for route in app.router.routes:
+        path = getattr(route, "path", None) or getattr(route, "path_format", None)
+        if path:
+            paths.append(path)
+    assert any("/mcp" in p for p in paths)
+
+
 def test_tool_wrappers_use_project(project, monkeypatch):
     monkeypatch.chdir(project.root)
     text = tool_status()

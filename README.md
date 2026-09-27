@@ -63,6 +63,44 @@ Open that folder in Antigravity / Gemini CLI. Ask: *use StoryCanon; brief chapte
 
 PowerShell: `storycanon brief 2` — do not prefix `/`.
 
+## Live MCP (HTTP)
+
+Local agents spawn `storycanon mcp` over stdio. To keep a **live** server Gemini / Antigravity / OpenRouter can hit by URL:
+
+```powershell
+cd my-webnovel
+storycanon mcp --http --host 127.0.0.1 --port 8765 --root .
+```
+
+Endpoint: `http://127.0.0.1:8765/mcp`  
+Health: `http://127.0.0.1:8765/health`
+
+Wire the novel project to that URL:
+
+```powershell
+storycanon install --http http://127.0.0.1:8765/mcp
+```
+
+Or put this in `.agents/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "storycanon": { "url": "http://127.0.0.1:8765/mcp" }
+  }
+}
+```
+
+To expose it beyond this machine (phone, cloud Gemini, a friend):
+
+```powershell
+storycanon mcp --http --host 0.0.0.0 --port 8765 --token YOUR_SECRET --root .
+```
+
+Then tunnel with Cloudflare Tunnel or ngrok to `https://….trycloudflare.com/mcp`. Clients send `Authorization: Bearer YOUR_SECRET`.
+
+The live server is still **your** canon (the `--root` novel folder). It is not a shared multi-user cloud unless you run one process per novel.
+
 Dev install from a clone:
 
 ```bash
